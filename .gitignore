@@ -1,0 +1,75 @@
+# ---- OpenFOAM: ignore generated results & clutter --------------------------
+
+# Time directories (keep 0/)
+[1-9]*
+[0-9]*.[0-9]*
+!0/
+
+# Common backups of initial fields
+0.orig/
+0.org/
+0.bak/
+
+# Parallel decomposition
+processor*/
+
+# Post-processing & sampling outputs
+postProcessing/
+graphs/
+sets/
+samples/
+probes/
+VTK/
+
+# Mesh artifacts (uncomment next line if you always regenerate mesh)
+# constant/polyMesh/
+
+# Feature extraction cache
+constant/extendedFeatureEdgeMesh/
+constant/polyMesh/
+# Dynamic coded function objects
+dynamicCode/
+
+# ParaView/foam triggers & exports (recreate as needed)
+*.OpenFOAM
+*.foam
+*.vtu
+*.vtp
+*.vtk
+*.pvd
+
+# Data exports & figures
+*.csv
+*.dat
+*.raw
+*.txt
+*.png
+*.jpg
+*.pdf
+
+# Logs
+log.*
+*.log
+*.out
+*.err
+
+# Build artifacts (if compiling custom code in this repo)
+platforms/
+build/
+cmake-build*/
+*.o
+*.so
+*.a
+
+# Misc editor/system junk
+*~
+.#*
+\#*\#
+*.swp
+.DS_Store
+Thumbs.db
+
+# Generated / large files
+constant/polyMesh/
+processor*/
+*.zip
