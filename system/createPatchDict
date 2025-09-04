@@ -1,0 +1,32 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2312                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      createPatchDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+pointSync false;        // keep mesh topo consistent
+
+patches
+(
+    {
+        name          vent;       // your patch name in boundary file
+
+        patchInfo
+        {
+            type      patch;          // or "wall"/"symmetryPlane"/etc
+        }
+
+        constructFrom set;            // grab faces from a set…
+        set           ventFaces;      // …the faceSet you just made
+    }
+);

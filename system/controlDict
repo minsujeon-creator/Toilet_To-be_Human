@@ -1,0 +1,127 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2312                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+application     simpleFoam;
+
+startFrom       latestTime;
+
+startTime       0;
+
+stopAt          endTime;    // endTime writeNow nextWrite
+
+endTime         10000;
+
+deltaT          1;
+
+writeControl    timeStep;
+
+writeInterval   100;
+
+purgeWrite      20;
+
+writeFormat     ascii;
+
+writePrecision  7;
+
+writeCompression no;
+
+timeFormat      general;
+
+timePrecision   6;
+
+runTimeModifiable yes;
+
+adjustTimeStep  yes;
+
+maxCo           1;
+
+maxDeltaT       1;
+
+libs
+(
+    "libutilityFunctionObjects.so"
+    "libfieldFunctionObjects.so"
+    "libforces.so"
+);  
+
+functions
+{
+    NH3_tracer
+    {
+        type            scalarTransport;
+        libs            (solverFunctionObjects);
+        field           NH3;
+        schemesField    NH3;
+
+        // Molecular diffusion (m^2/s) from the paper
+        D               1.98e-5;   // NH3
+
+        // source on cellZone "pooCells"
+        fvOptions
+        {
+        NH3_source
+        {
+            type          scalarSemiImplicitSource;
+            active        true;
+            selectionMode cellZone;
+            cellZone      pooCells;
+
+            // Treat Su as TOTAL mass flow for the zone (kg/s)
+            volumeMode    absolute;
+
+            // (Su  Sp) for field NH3    -> Sp=0 (pure source)
+            injectionRateSuSp
+            {
+            NH3         (3.855e-6 0);   // kg/s from the paper
+            }
+        }
+        }
+
+        writeControl  outputTime;
+        writeInterval 1;
+    }
+
+    H2S_tracer
+    {
+        type            scalarTransport;
+        libs            (solverFunctionObjects);
+        field           H2S;
+        schemesField    H2S;
+        D               1.414e-5;        // H2S
+
+        fvOptions
+        {
+        H2S_source
+        {
+            type          scalarSemiImplicitSource;
+            active        true;
+            selectionMode cellZone;
+            cellZone      pooCells;
+            volumeMode    absolute;
+
+            injectionRateSuSp
+            {
+            H2S         (5.945e-6 0);  // kg/s from the paper
+            }
+        }
+        }
+
+        writeControl  outputTime;
+        writeInterval 1;
+    }
+}
+
+// ************************************************************************* //

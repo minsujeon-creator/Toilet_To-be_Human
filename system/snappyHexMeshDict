@@ -1,0 +1,129 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2312                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      snappyHexMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+castellatedMesh true;
+snap            true;
+addLayers       false;
+
+geometry
+{
+    vent.stl   { type triSurfaceMesh; name vent;   }
+    toilet.stl { type triSurfaceMesh; name toilet; }
+    human.stl  { type triSurfaceMesh; name human;  }
+    refBox
+    {
+        type searchableBox;
+        min (0.30  0.20  0.00);
+        max (0.51 0.70  0.40);  
+    }
+}
+
+castellatedMeshControls
+{
+    // keep mesh in the 1–2M range
+    maxLocalCells          250000;        // per-rank
+    maxGlobalCells         2000000;       // hard cap
+    minRefinementCells     0;
+    maxLoadUnbalance       0.10;
+    nCellsBetweenLevels    2;             // NOT 5 (safer transitions)
+    resolveFeatureAngle    60;            // fewer over-snaps than 30
+
+    // Use only if the .eMesh files exist (see commands below)
+    features
+    (
+        { file "vent.eMesh";   level 1; }
+        { file "toilet.eMesh"; level 2; }
+        { file "human.eMesh";  level 1; }
+    );
+
+    // Moderate surface refinement; let physics carry the rest
+    refinementSurfaces
+    {
+        vent   { level (1 2); patchInfo { type patch; } }
+        toilet { level (4 6); patchInfo { type wall;  } }
+        human  { level (1 2); patchInfo { type wall;  } }
+    }
+
+    refinementRegions
+    {
+        refBox
+        {
+            mode   inside;
+            levels ((1e15 4));   // refine everything inside to level 3
+        }
+    }
+
+    // IMPORTANT: point clearly inside the fluid domain (not on x=0.5 plane)
+    locationInMesh (0.20 0.80 1.00);
+    allowFreeStandingZoneFaces false;
+}
+
+snapControls
+{
+    nSmoothPatch        3;
+    tolerance           2.5;
+    nSolveIter          30;
+    nRelaxIter          5;
+
+    // Fewer foldovers than implicit on human/toilet
+    explicitFeatureSnap true;
+    implicitFeatureSnap false;
+    multiRegionFeatureSnap false;
+    nFeatureSnapIter    10;
+}
+
+addLayersControls
+{
+    // Ignored since addLayers=false, but keep sane defaults
+    relativeSizes          true;
+    layers                 { }
+    expansionRatio         1.0;
+    finalLayerThickness    0.3;
+    minThickness           0.1;
+    nGrow                  0;
+    featureAngle           30;
+    nRelaxIter             3;
+    nSmoothSurfaceNormals  1;
+    nSmoothNormals         3;
+    nSmoothThickness       10;
+    maxFaceThicknessRatio  0.5;
+    maxThicknessToMedialRatio 0.3;
+    minMedialAxisAngle     90;
+    nBufferCellsNoExtrude  0;
+    nLayerIter             50;
+}
+
+meshQualityControls
+{
+    maxNonOrtho         70;
+    maxBoundarySkewness 4;
+    maxInternalSkewness 4;
+    maxConcave          65;
+    minVol              1e-13;
+    minTetQuality       1e-9;
+    minArea             1e-10;
+    minTwist            0.02;
+    minDeterminant      0.001;
+    minFaceWeight       0.02;
+    minVolRatio         0.01;
+    minTriangleTwist    0.3;
+
+    nSmoothScale        4;
+    errorReduction      0.75;
+}
+
+mergeTolerance 1e-6;
+// ************************************************************************* //

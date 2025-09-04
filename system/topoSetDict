@@ -1,0 +1,68 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2312                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      topoSetDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+//actions
+//(
+//    // Vent
+//    {
+//        name        ventFaces;
+//        type        faceSet;
+//        action      new;
+//        source      boxToFace;
+//        sourceInfo
+//        {
+//            box (0.45  0.173  0.418) (0.54  0.175  0.430);
+//        }
+//    }
+//);
+actions
+(
+    {
+        name    wallFaces;
+        type    faceSet;
+        action  new;
+        source  patchToFace;          // faces that belong to a patch
+        sourceInfo
+        {
+            patches ( walls );       // ← current wall-patch name
+        }
+    }
+
+    // 1b – keep only those wall-faces whose centres are inside the box
+    {
+        name    ventFaces;            // final selection
+        type    faceSet;
+        action  new;
+        source  boxToFace;            // filter by bounding box
+        sourceInfo
+        {
+            set wallFaces;            // filter the set from 1a
+            box (0.464 0.19 0.385)   // min-corner  (x y z)
+                (0.535  0.2001 0.402);// max-corner
+        }
+    }
+    // Faces inside the thin box around z=0.3
+    {
+        name    pooCells;
+        type    cellSet;
+        action  new;
+        source  boxToCell;
+        sourceInfo
+        {
+            box (0.45 0.35 0.295) (0.55 0.45 0.305);
+        }
+    }
+);

@@ -1,0 +1,149 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2412                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      blockMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+scale   1;
+
+// --- geometry extents (same as yours)
+xmin -0.3;
+xmax  0.5;
+ymin  0.2;
+ymax  1.4;
+zmin  0.0;
+zmax  2.0;
+
+// --- split height (top region starts here)
+zsplit 0.6;   // ensure zmin < zsplit < zmax
+
+// --- desired target spacings (set these)
+deltax_bot 0.05;
+deltax_top 0.05;
+
+deltay_bot 0.05;
+deltay_top 0.05;
+
+deltaz_bot 0.05;   // for bottom region thickness (zmin→zsplit)
+deltaz_top 0.05;   // for top region thickness (zsplit→zmax)
+
+// --- optional grading (1 = uniform). Keep x,y grading equal across both blocks.
+rX 1;
+rY 1;
+rZ_bot 1;     // e.g. >1 to stretch toward zmax of the *bottom* block (i.e., toward zsplit)
+rZ_top 1;     // e.g. >1 to stretch toward zmax of the *top* block (i.e., toward zmax)
+
+// --- lengths
+lx  #calc "$xmax - $xmin";
+ly  #calc "$ymax - $ymin";
+lz1 #calc "$zsplit - $zmin";
+lz2 #calc "$zmax  - $zsplit";
+
+// --- per-region suggested counts from targets
+xcells_bot_suggest #calc "round($lx/$deltax_bot)";
+xcells_top_suggest #calc "round($lx/$deltax_top)";
+
+ycells_bot_suggest #calc "round($ly/$deltay_bot)";
+ycells_top_suggest #calc "round($ly/$deltay_top)";
+
+// --- enforce conformity across the z-interface (x & y must match)
+xcells #calc "($xcells_bot_suggest > $xcells_top_suggest) ? $xcells_bot_suggest : $xcells_top_suggest";
+ycells #calc "($ycells_bot_suggest > $ycells_top_suggest) ? $ycells_bot_suggest : $ycells_top_suggest";
+
+// --- z can differ per region
+zcells1 #calc "round($lz1/$deltaz_bot)";
+zcells2 #calc "round($lz2/$deltaz_top)";
+
+vertices
+(
+    // z = zmin
+    ($xmin $ymin $zmin)  // 0
+    ($xmax $ymin $zmin)  // 1
+    ($xmax $ymax $zmin)  // 2
+    ($xmin $ymax $zmin)  // 3
+
+    // z = zsplit (internal interface)
+    ($xmin $ymin $zsplit) // 4
+    ($xmax $ymin $zsplit) // 5
+    ($xmax $ymax $zsplit) // 6
+    ($xmin $ymax $zsplit) // 7
+
+    // z = zmax (ceiling)
+    ($xmin $ymin $zmax)  // 8
+    ($xmax $ymin $zmax)  // 9
+    ($xmax $ymax $zmax)  // 10
+    ($xmin $ymax $zmax)  // 11
+);
+
+blocks
+(
+    // bottom: zmin → zsplit
+    hex (0 1 2 3 4 5 6 7)   ($xcells $ycells $zcells1) simpleGrading ($rX $rY $rZ_bot)
+
+    // top: zsplit → zmax
+    hex (4 5 6 7 8 9 10 11) ($xcells $ycells $zcells2) simpleGrading ($rX $rY $rZ_top)
+);
+
+edges
+(
+);
+
+// Patches: list ONLY external faces (z=zsplit interface is internal)
+boundary
+(
+    // symmetry at x = xmax
+    symmCut
+    {
+        type symmetryPlane;
+        faces
+        (
+            (1 2 6 5)     // lower side, x = xmax
+            (5 6 10 9)    // upper side, x = xmax
+        );
+    }
+
+    // floor at z = zmin
+    floor
+    {
+        type wall;
+        faces
+        (
+            (0 1 2 3)
+        );
+    }
+
+    // remaining outer faces grouped as "walls"
+    walls
+    {
+        type patch;
+        faces
+        (
+            // y = ymax
+            (3 2 6 7)      // lower
+            (7 6 10 11)    // upper
+
+            // x = xmin
+            (0 3 7 4)      // lower
+            (4 7 11 8)     // upper
+
+            // z = zmax (ceiling)
+            (8 9 10 11)
+
+            // y = ymin
+            (0 1 5 4)      // lower
+            (4 5 9 8)      // upper
+        );
+    }
+);
+
+// ************************************************************************* //

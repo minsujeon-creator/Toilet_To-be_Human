@@ -1,0 +1,124 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2312                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvSolution;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+solvers
+{
+    "(p|pcorr)"
+    {
+        solver          GAMG;
+        smoother        DICGaussSeidel;
+        tolerance       1e-06;
+        relTol          0.1;
+    }
+
+    "(p|pcorr)Final"
+    {
+        $p;
+        tolerance       1e-06;
+        relTol          0;
+    }
+
+    "(U|k|omega)"
+    {
+        solver          smoothSolver;
+        smoother        symGaussSeidel;
+        tolerance       1e-06;
+        relTol          0.1;
+    }
+
+    "(U|k|omega)Final"
+    {
+        $U;
+        tolerance       1e-06;
+        relTol          0;
+    }
+    // Passive tracer (your concentration field)
+    freshAir
+    {
+        solver      smoothSolver;
+        smoother    symGaussSeidel;
+        nSweeps     2;
+        tolerance   1e-6;
+        relTol      0.1;
+    }
+    freshAirFinal
+    {
+        $freshAir;
+        relTol      0;
+    }
+    H2S
+    {
+        solver      smoothSolver;
+        smoother    symGaussSeidel;
+        nSweeps     2;
+        tolerance   1e-9;
+        relTol      0.1;
+    }
+    H2SFinal
+    {
+        $H2S;
+        relTol      0;
+    }
+
+    NH3
+    {
+        solver      smoothSolver;
+        smoother    symGaussSeidel;
+        nSweeps     2;
+        tolerance   1e-9;
+        relTol      0.1;
+    }
+    NH3Final
+    {
+        $NH3;
+        relTol      0;
+    }
+}
+
+SIMPLE
+{
+    nNonOrthogonalCorrectors 2;
+
+    residualControl
+    {
+        "(p|U)"                1e-5;
+        "(k|epsilon|omega|nut)" 1e-5;
+        freshAir                1e-5;
+        H2S                     1e-5;
+        NH3                     1e-5;
+    }
+}
+
+relaxationFactors
+{
+    fields
+    {
+        p 0.3;
+        NH3 1;
+        H2S 1;
+    }
+    equations
+    {
+        U 0.7;
+        "(k|epsilon|omega)" 0.7;
+        freshAir                0.8;
+        H2S                     0.8;
+        NH3                     0.8;
+    }
+}
+
+
+// ************************************************************************* //
